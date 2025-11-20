@@ -4,6 +4,10 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.util.log.Log;
 import org.eclipse.jetty.util.log.StdErrLog;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.eclipse.jetty.servlet.FilterHolder;
+import javax.servlet.DispatcherType;
+import java.util.EnumSet;
 
 public class AppServer {
 
@@ -12,6 +16,12 @@ public class AppServer {
 
         ServletHandler handler = new ServletHandler();
         handler.addServletWithMapping(AppServlet.class, "/*");
+
+        FilterHolder cors = handler.addFilterWithMapping(CrossOriginFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "localhost:8080"); // allow all origins
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,POST");
+        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "X-Requested-With,Content-Type,Accept,Origin,Status");
 
         Server server = new Server(8080);
         server.setHandler(handler);
