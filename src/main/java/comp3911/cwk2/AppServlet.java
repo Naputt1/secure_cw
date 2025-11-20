@@ -44,7 +44,7 @@ public class AppServlet extends HttpServlet {
             fm.setDirectoryForTemplateLoading(new File("./templates"));
             fm.setOutputFormat(freemarker.core.HTMLOutputFormat.INSTANCE);
             fm.setDefaultEncoding("UTF-8");
-            fm.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
+            fm.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
             fm.setLogTemplateExceptions(false);
             fm.setWrapUncheckedExceptions(true);
         } catch (IOException error) {
