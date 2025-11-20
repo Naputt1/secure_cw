@@ -42,6 +42,7 @@ public class AppServlet extends HttpServlet {
     private void configureTemplateEngine() throws ServletException {
         try {
             fm.setDirectoryForTemplateLoading(new File("./templates"));
+            fm.setOutputFormat(freemarker.core.HTMLOutputFormat.INSTANCE);
             fm.setDefaultEncoding("UTF-8");
             fm.setTemplateExceptionHandler(TemplateExceptionHandler.HTML_DEBUG_HANDLER);
             fm.setLogTemplateExceptions(false);
