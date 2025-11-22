@@ -2,6 +2,8 @@ package comp3911.cwk2;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.spec.KeySpec;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -13,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -27,8 +31,9 @@ import freemarker.template.TemplateExceptionHandler;
 public class AppServlet extends HttpServlet {
 
     private static final String CONNECTION_URL = "jdbc:sqlite:db.sqlite3";
-    private static final String AUTH_QUERY = "select * from user where username=? and password=?";
+    private static final String AUTH_QUERY = "select * from user where username=? and hash=?";
     private static final String SEARCH_QUERY = "select * from patient where surname=? collate nocase";
+    private static final String GET_SALT = "select hash, salt from user where username=?";
 
     private final Configuration fm = new Configuration(Configuration.VERSION_2_3_28);
     private Connection database;
@@ -102,12 +107,35 @@ public class AppServlet extends HttpServlet {
     private boolean authenticated(String username, String password) throws SQLException {
         try (PreparedStatement stmt = database.prepareStatement(AUTH_QUERY)) {
             stmt.setString(1, username);
-            stmt.setString(2, password);
 
-            ResultSet results = stmt.executeQuery();
-            return results.next();
+            //execute hash attempt
+            try(PreparedStatement getsalt = database.prepareStatement(GET_SALT)){
+                getsalt.setString(1, username);
+                ResultSet resultSet = getsalt.executeQuery();
+                
+                if (!resultSet.next()){
+                    return false;
+                }
+
+                byte[] salt = resultSet.getBytes("salt");
+                byte[] hash = resultSet.getBytes("hash");
+                byte[] hash_attempt = get_hash(salt, password);
+                return MessageDigest.isEqual(hash, hash_attempt);
+            }
+
+            
         }
     }
+
+    private byte[] get_hash(byte[] salt, String password) {
+        try {
+            KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256); // 256 bits
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            return factory.generateSecret(spec).getEncoded();
+        } catch (Exception e) {
+            throw new RuntimeException("Hashing failed", e);
+    }
+}
 
     private List<Record> searchResults(String surname) throws SQLException {
         List<Record> records = new ArrayList<>();
