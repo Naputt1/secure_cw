@@ -17,12 +17,6 @@ public class AppServer {
         ServletHandler handler = new ServletHandler();
         handler.addServletWithMapping(AppServlet.class, "/*");
 
-        FilterHolder cors = handler.addFilterWithMapping(CrossOriginFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
-
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, "localhost:8080"); // allow all origins
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,POST");
-        cors.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "X-Requested-With,Content-Type,Accept,Origin,Status");
-
         Server server = new Server(8080);
         server.setHandler(handler);
 
