@@ -13,7 +13,6 @@ public class AppServer {
 
         ServletHandler handler = new ServletHandler();
         handler.addServletWithMapping(AppServlet.class, "/*");
-
         Server server = new Server();
 
         //OLD HTTP CONNECTION
@@ -37,7 +36,6 @@ public class AppServer {
         );
         https.setPort(8443);
         server.addConnector(https);
-
         server.setHandler(handler);
 
         server.start();
