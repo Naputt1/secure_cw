@@ -149,15 +149,18 @@ public class AppServlet extends HttpServlet {
 
         try {
             if (authenticated(username, password)) {
-                // Get search results and merge with template
-                Map<String, Object> model = new HashMap<>();
-                model.put("records", searchResults(surname));
-                Template template = fm.getTemplate("details.html");
-                template.process(model, response.getWriter());
-            } else {
-                Template template = fm.getTemplate("invalid.html");
-                template.process(null, response.getWriter());
-            }
+    // Get doctorId for logged-in user (Broken Access Control fix)
+    String doctorId = getDoctorIdForUser(username);
+
+    Map<String, Object> model = new HashMap<>();
+    model.put("records", searchResults(surname, doctorId));
+
+    Template template = fm.getTemplate("details.html");
+    template.process(model, response.getWriter());
+} else {
+    Template template = fm.getTemplate("invalid.html");
+    template.process(null, response.getWriter());
+}
             response.setContentType("text/html");
             response.setStatus(HttpServletResponse.SC_OK);
         } catch (Exception error) {
