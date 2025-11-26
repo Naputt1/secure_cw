@@ -188,6 +188,21 @@ public class AppServlet extends HttpServlet {
             return MessageDigest.isEqual(hash, hash_attempt);
         }
     }
+    // FIX for Flaw #5 (Broken Access Control): retrieve doctorId for logged-in user
+private String getDoctorIdForUser(String username) throws SQLException {
+    String query = "SELECT doctorId FROM user WHERE username = ?";
+
+    try (PreparedStatement stmt = database.prepareStatement(query)) {
+        stmt.setString(1, username);
+        ResultSet rs = stmt.executeQuery();
+
+        if (rs.next()) {
+            return rs.getString("doctorId");
+        }
+    }
+    return null;
+}
+
 
     private byte[] get_hash(byte[] salt, String password) {
         try {
@@ -199,23 +214,31 @@ public class AppServlet extends HttpServlet {
     }
 }
 
-    private List<Record> searchResults(String surname) throws SQLException {
-        List<Record> records = new ArrayList<>();
-        try (PreparedStatement stmt = database.prepareStatement(SEARCH_QUERY)) {
-            stmt.setString(1, surname);
+    // FIX for Flaw #5 (Broken Access Control): restrict results to patients of this doctor
+private List<Record> searchResults(String surname, String doctorId) throws SQLException {
 
-            ResultSet results = stmt.executeQuery();
-            while (results.next()) {
-                Record rec = new Record();
-                rec.setSurname(results.getString(2));
-                rec.setForename(results.getString(3));
-                rec.setAddress(results.getString(4));
-                rec.setDateOfBirth(results.getString(5));
-                rec.setDoctorId(results.getString(6));
-                rec.setDiagnosis(results.getString(7));
-                records.add(rec);
-            }
+    String query = "SELECT * FROM patient WHERE surname=? COLLATE NOCASE AND doctorId=?";
+
+    List<Record> records = new ArrayList<>();
+
+    try (PreparedStatement stmt = database.prepareStatement(query)) {
+        stmt.setString(1, surname);
+        stmt.setString(2, doctorId);
+
+        ResultSet results = stmt.executeQuery();
+
+        while (results.next()) {
+            Record rec = new Record();
+            rec.setSurname(results.getString("surname"));
+            rec.setForename(results.getString("forename"));
+            rec.setAddress(results.getString("address"));
+            rec.setDateOfBirth(results.getString("dateOfBirth"));
+            rec.setDoctorId(results.getString("doctorId"));
+            rec.setDiagnosis(results.getString("diagnosis"));
+            records.add(rec);
         }
-        return records;
     }
+    return records;
+}
+
 }
